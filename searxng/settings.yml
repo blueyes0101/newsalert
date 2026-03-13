@@ -1,0 +1,97 @@
+# SearXNG settings for NewsAlert
+# Docs: https://docs.searxng.org/admin/settings/index.html
+
+general:
+  instance_name: "NewsAlert SearXNG"
+  privacypolicy_url: ""
+  donation_url: ""
+  contact_url: ""
+  enable_metrics: false
+
+brand:
+  new_issue_url: ""
+  docs_url: ""
+  public_instances: ""
+  wiki_url: ""
+
+search:
+  safe_search: 0
+  autocomplete: ""
+  default_lang: "en"
+  formats:
+    - html
+    - json
+
+server:
+  port: 8080
+  bind_address: "0.0.0.0"
+  secret_key: "newsalert-searxng-secret-key-change-in-production"
+  base_url: false
+  image_proxy: false
+  http_protocol_version: "1.0"
+  method: "POST"
+
+ui:
+  static_use_hash: false
+  default_locale: ""
+  query_in_title: false
+  infinite_scroll: false
+  center_alignment: false
+  default_theme: simple
+  theme_args:
+    simple_style: auto
+
+redis:
+  url: false
+
+outgoing:
+  request_timeout: 6.0
+  max_request_timeout: 15.0
+  useragent_suffix: ""
+  pool_connections: 100
+  pool_maxsize: 20
+  enable_http2: true
+
+engines:
+  - name: bing
+    engine: bing
+    shortcut: bi
+
+  - name: google
+    engine: google
+    shortcut: g
+    use_mobile_ui: false
+
+  - name: duckduckgo
+    engine: duckduckgo
+    shortcut: ddg
+
+  - name: brave
+    engine: brave
+    shortcut: br
+    time_range_support: true
+    paging: true
+    categories: general, news
+    brave_category: search
+
+  - name: google news
+    engine: google_news
+    shortcut: gn
+
+  - name: bing news
+    engine: bing_news
+    shortcut: bin
+
+categories_as_tabs:
+  general:
+    name: General
+    weight: 1
+  news:
+    name: News
+    weight: 2
+
+doi_resolvers:
+  oadoi.org: "https://oadoi.org/"
+  sci-hub.se: "https://sci-hub.se/"
+
+default_doi_resolver: "oadoi.org"

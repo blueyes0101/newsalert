@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.newsalert.client.ui.SetupWizardController"
+            prefWidth="480" prefHeight="400"
+            style="-fx-background-color: #ffffff;">
+
+    <!-- ── Header bar ──────────────────────────────────────────────────── -->
+    <top>
+        <HBox style="-fx-background-color: #1a73e8; -fx-padding: 16 24 16 24;">
+            <Label text="NewsAlert" style="-fx-text-fill: white; -fx-font-size: 20; -fx-font-weight: bold;"/>
+        </HBox>
+    </top>
+
+    <!-- ── Content area (steps swap in/out) ───────────────────────────── -->
+    <center>
+        <StackPane style="-fx-padding: 24;">
+
+            <!-- Step 0: Welcome -->
+            <VBox fx:id="stepWelcome" spacing="16" alignment="CENTER">
+                <Label text="Welcome to NewsAlert" style="-fx-font-size: 18; -fx-font-weight: bold;"/>
+                <Label wrapText="true" textAlignment="CENTER"
+                       text="NewsAlert monitors the web for keywords you care about and notifies you the moment new content is found.&#10;&#10;This wizard will create your account and set up your first keyword alert."/>
+                <Label text="Click 'Next' to get started." style="-fx-text-fill: #555555;"/>
+            </VBox>
+
+            <!-- Step 1: Register -->
+            <VBox fx:id="stepRegister" spacing="12" visible="false" managed="false">
+                <Label text="Create your account" style="-fx-font-size: 16; -fx-font-weight: bold;"/>
+                <GridPane hgap="10" vgap="10">
+                    <Label text="Email:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                    <TextField fx:id="emailField" promptText="you@example.com"
+                               prefWidth="280"
+                               GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                    <Label text="Password:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                    <PasswordField fx:id="passwordField" promptText="Min. 8 characters"
+                                   GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                    <Label text="Confirm:" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                    <PasswordField fx:id="confirmField" promptText="Repeat password"
+                                   GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                </GridPane>
+                <Label fx:id="registerError" style="-fx-text-fill: #d32f2f;" wrapText="true"/>
+            </VBox>
+
+            <!-- Step 2: Add first keyword -->
+            <VBox fx:id="stepKeyword" spacing="12" visible="false" managed="false">
+                <Label text="Add your first keyword" style="-fx-font-size: 16; -fx-font-weight: bold;"/>
+                <Label wrapText="true"
+                       text="Enter a topic you want to follow. Examples: 'Bitcoin', 'Iran', 'climate change'"/>
+                <HBox spacing="8" alignment="CENTER_LEFT">
+                    <TextField fx:id="keywordField" promptText="e.g. Bitcoin" prefWidth="260"
+                               onAction="#onNext"/>
+                </HBox>
+                <Label fx:id="keywordError" style="-fx-text-fill: #d32f2f;" wrapText="true"/>
+            </VBox>
+
+            <!-- Step 3: Done -->
+            <VBox fx:id="stepDone" spacing="16" alignment="CENTER" visible="false" managed="false">
+                <Label text="✓ System is ready!" style="-fx-font-size: 20; -fx-text-fill: #1a73e8; -fx-font-weight: bold;"/>
+                <Label wrapText="true" textAlignment="CENTER"
+                       text="NewsAlert is now running in the background.&#10;&#10;Look for the tray icon in your taskbar – right-click it to manage your keywords or view recent results."/>
+            </VBox>
+
+        </StackPane>
+    </center>
+
+    <!-- ── Navigation buttons ─────────────────────────────────────────── -->
+    <bottom>
+        <HBox alignment="CENTER_RIGHT" spacing="10"
+              style="-fx-padding: 12 24 16 24; -fx-border-color: #e0e0e0; -fx-border-width: 1 0 0 0;">
+            <Button fx:id="backBtn" text="← Back" onAction="#onBack"
+                    prefWidth="90" disable="true"/>
+            <Button fx:id="nextBtn" text="Next →" onAction="#onNext"
+                    prefWidth="100"
+                    style="-fx-background-color: #1a73e8; -fx-text-fill: white; -fx-font-weight: bold;"/>
+        </HBox>
+    </bottom>
+
+</BorderPane>

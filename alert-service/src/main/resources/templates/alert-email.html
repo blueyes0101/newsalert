@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NewsAlert Notification</title>
+    <style>
+        body        { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+        .container  { max-width: 640px; margin: 32px auto; background: #ffffff;
+                      border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+        .header     { background-color: #1a73e8; padding: 24px 32px; }
+        .header h1  { color: #ffffff; margin: 0; font-size: 22px; }
+        .header p   { color: #d0e4ff; margin: 6px 0 0; font-size: 14px; }
+        .body       { padding: 24px 32px; }
+        .body p     { color: #444444; line-height: 1.6; margin: 0 0 16px; }
+        .result     { border: 1px solid #e0e0e0; border-radius: 6px;
+                      padding: 14px 16px; margin-bottom: 12px; background: #fafafa; }
+        .result a   { color: #1a73e8; font-size: 15px; font-weight: bold;
+                      text-decoration: none; word-break: break-word; }
+        .result a:hover { text-decoration: underline; }
+        .result .snippet { color: #666666; font-size: 13px; margin: 6px 0 0; line-height: 1.5; }
+        .result .meta    { color: #999999; font-size: 12px; margin: 4px 0 0; }
+        .footer     { background-color: #f8f8f8; padding: 16px 32px;
+                      border-top: 1px solid #e0e0e0; text-align: center; }
+        .footer p   { color: #999999; font-size: 12px; margin: 0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>NewsAlert</h1>
+        <p>
+            {count} new result{#if count != 1}s{/if} for keyword &ldquo;<strong>{keyword}</strong>&rdquo;
+        </p>
+    </div>
+
+    <div class="body">
+        <p>
+            We found {count} new article{#if count != 1}s{/if} matching
+            your alert for <strong>&ldquo;{keyword}&rdquo;</strong>.
+        </p>
+
+        {#for result in results}
+        <div class="result">
+            <a href="{result.url}" target="_blank" rel="noopener noreferrer">
+                {#if result.title && result.title.length > 0}
+                    {result.title}
+                {#else}
+                    {result.url}
+                {/if}
+            </a>
+            {#if result.snippet && result.snippet.length > 0}
+            <p class="snippet">{result.snippet}</p>
+            {/if}
+            {#if result.discoveredAt}
+            <p class="meta">Discovered: {result.discoveredAt} &nbsp;|&nbsp; Source: {result.source ?: "unknown"}</p>
+            {/if}
+        </div>
+        {/for}
+    </div>
+
+    <div class="footer">
+        <p>
+            You received this email because you set up a NewsAlert for
+            &ldquo;{keyword}&rdquo;.<br>
+            Log in to manage your alerts.
+        </p>
+    </div>
+
+</div>
+
+</body>
+</html>

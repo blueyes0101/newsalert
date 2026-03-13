@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<!--
+  Undecorated popup shown in the bottom-right corner.
+  Stage size: 320 × 110 px (set programmatically in NotificationPopupController.show())
+-->
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.newsalert.client.ui.NotificationPopupController"
+            style="-fx-background-color: #1a73e8; -fx-background-radius: 8;
+                   -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 12, 0, 0, 4);">
+
+    <!-- ── Message ────────────────────────────────────────────────────── -->
+    <center>
+        <Label fx:id="messageLabel"
+               style="-fx-text-fill: white; -fx-font-size: 13; -fx-font-weight: bold;
+                      -fx-padding: 16 16 8 16; -fx-wrap-text: true;"
+               maxWidth="288"
+               text="🔔 New results available"/>
+    </center>
+
+    <!-- ── Buttons ────────────────────────────────────────────────────── -->
+    <bottom>
+        <HBox alignment="CENTER_RIGHT" spacing="8"
+              style="-fx-padding: 0 12 10 12;">
+            <Button text="View"
+                    onAction="#onView"
+                    style="-fx-background-color: white; -fx-text-fill: #1a73e8;
+                           -fx-font-weight: bold; -fx-background-radius: 4;"/>
+            <Button text="Close"
+                    onAction="#onClose"
+                    style="-fx-background-color: transparent; -fx-text-fill: white;
+                           -fx-border-color: white; -fx-border-radius: 4;
+                           -fx-background-radius: 4;"/>
+        </HBox>
+    </bottom>
+
+</BorderPane>

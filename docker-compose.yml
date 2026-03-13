@@ -1,0 +1,189 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# NewsAlert – Docker Compose
+#
+# Startup order (enforced by depends_on + healthchecks):
+#   Tier 1 (parallel): postgres  elasticsearch  zookeeper  searxng
+#   Tier 2:            kafka            (after zookeeper healthy)
+#   Tier 3:            alert-service   (after postgres + kafka healthy)
+#   Tier 4:            news-service    (after postgres + elasticsearch + kafka + alert-service healthy)
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── PostgreSQL ────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_DB:       newsalert
+      POSTGRES_USER:     newsalert
+      POSTGRES_PASSWORD: newsalert
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U newsalert -d newsalert"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── Elasticsearch ─────────────────────────────────────────────────────────
+  elasticsearch:
+    image: elasticsearch:8.13.0
+    restart: always
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - cluster.routing.allocation.disk.threshold_enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # ── Zookeeper ─────────────────────────────────────────────────────────────
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    restart: always
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME:   2000
+      ZOOKEEPER_4LW_COMMANDS_WHITELIST: "ruok,stat,srvr,mntr"
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_log:/var/lib/zookeeper/log
+    healthcheck:
+      test: ["CMD-SHELL", "echo srvr | nc -w 2 localhost 2181 | grep -q 'Zookeeper version'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ── Kafka ─────────────────────────────────────────────────────────────────
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    restart: always
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID:                        1
+      KAFKA_ZOOKEEPER_CONNECT:                zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP:   PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS:             PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE:        "true"
+      KAFKA_LOG_RETENTION_HOURS:              48
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # ── SearXNG ───────────────────────────────────────────────────────────────
+  searxng:
+    image: searxng/searxng:latest
+    restart: always
+    ports:
+      - "8888:8080"
+    volumes:
+      - ./searxng:/etc/searxng:rw
+      - searxng_data:/etc/searxng/data
+    environment:
+      - SEARXNG_BASE_URL=http://localhost:8888/
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/healthz || curl -sf http://localhost:8080/ || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+
+  # ── Alert Service (Quarkus) ───────────────────────────────────────────────
+  # Starts before news-service so that /api/internal/keywords is ready
+  # for the first crawler cycle.
+  alert-service:
+    build:
+      context: ./alert-service
+      dockerfile: src/main/docker/Dockerfile.jvm
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      QUARKUS_HTTP_PORT:                                8081
+      QUARKUS_DATASOURCE_JDBC_URL:                      jdbc:postgresql://postgres:5432/newsalert
+      QUARKUS_DATASOURCE_USERNAME:                      newsalert
+      QUARKUS_DATASOURCE_PASSWORD:                      newsalert
+      QUARKUS_HIBERNATE_SEARCH_ORM_ELASTICSEARCH_HOSTS: elasticsearch:9200
+      KAFKA_BOOTSTRAP_SERVERS:                          kafka:29092
+      QUARKUS_REST_CLIENT_NEWS_SERVICE_URL:             http://news-service:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8081/q/health/live || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 8
+      start_period: 60s
+
+  # ── News Service (Quarkus) ────────────────────────────────────────────────
+  news-service:
+    build:
+      context: ./news-service
+      dockerfile: src/main/docker/Dockerfile.jvm
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      QUARKUS_DATASOURCE_JDBC_URL:                      jdbc:postgresql://postgres:5432/newsalert
+      QUARKUS_DATASOURCE_USERNAME:                      newsalert
+      QUARKUS_DATASOURCE_PASSWORD:                      newsalert
+      QUARKUS_HIBERNATE_SEARCH_ORM_ELASTICSEARCH_HOSTS: elasticsearch:9200
+      KAFKA_BOOTSTRAP_SERVERS:                          kafka:29092
+      QUARKUS_REST_CLIENT_SEARXNG_URL:                  http://searxng:8080
+      QUARKUS_REST_CLIENT_ALERT_SERVICE_URL:            http://alert-service:8081
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      alert-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/q/health/live || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 8
+      start_period: 60s
+
+volumes:
+  postgres_data:
+  elasticsearch_data:
+  zookeeper_data:
+  zookeeper_log:
+  kafka_data:
+  searxng_data:

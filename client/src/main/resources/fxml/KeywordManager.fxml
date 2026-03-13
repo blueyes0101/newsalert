@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.newsalert.client.ui.KeywordManagerController"
+            prefWidth="600" prefHeight="420">
+
+    <!-- ── Top toolbar ────────────────────────────────────────────────── -->
+    <top>
+        <HBox spacing="8" style="-fx-padding: 12; -fx-background-color: #f5f5f5;
+                                  -fx-border-color: #e0e0e0; -fx-border-width: 0 0 1 0;">
+            <TextField fx:id="keywordInput" promptText="New keyword…"
+                       prefWidth="240" onAction="#onAdd"/>
+            <Button text="Add"     onAction="#onAdd"
+                    style="-fx-background-color: #1a73e8; -fx-text-fill: white;"/>
+            <Button text="Delete"  onAction="#onDelete"/>
+            <Button text="Toggle"  onAction="#onToggle"/>
+            <Button text="Refresh" onAction="#onRefresh"/>
+        </HBox>
+    </top>
+
+    <!-- ── Alerts table ───────────────────────────────────────────────── -->
+    <center>
+        <TableView fx:id="alertTable" BorderPane.alignment="CENTER">
+            <columns>
+                <TableColumn fx:id="colId"      text="ID"      prefWidth="60"/>
+                <TableColumn fx:id="colKeyword" text="Keyword" prefWidth="300"/>
+                <TableColumn fx:id="colActive"  text="Active"  prefWidth="80"/>
+            </columns>
+            <placeholder><Label text="No alerts yet. Add a keyword above."/></placeholder>
+        </TableView>
+    </center>
+
+    <!-- ── Status bar ─────────────────────────────────────────────────── -->
+    <bottom>
+        <HBox style="-fx-padding: 6 12; -fx-background-color: #fafafa;
+                     -fx-border-color: #e0e0e0; -fx-border-width: 1 0 0 0;">
+            <Label fx:id="statusLabel" text="Loading…" style="-fx-text-fill: #666666;"/>
+        </HBox>
+    </bottom>
+
+</BorderPane>

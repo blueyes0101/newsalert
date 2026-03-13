@@ -1,0 +1,85 @@
+# ── Build output ──────────────────────────────────────────────────────────────
+target/
+*/target/
+build/
+out/
+
+# ── Maven ─────────────────────────────────────────────────────────────────────
+.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.properties
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+
+# ── Quarkus ───────────────────────────────────────────────────────────────────
+.quarkus/
+*/src/main/resources/application-local.properties
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.idea/
+*.iws
+*.iml
+*.ipr
+.classpath
+.project
+.settings/
+.vscode/
+*.code-workspace
+nbproject/
+nb-configuration.xml
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ── Java ─────────────────────────────────────────────────────────────────────
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+replay_pid*
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Docker volumes / local data ───────────────────────────────────────────────
+postgres_data/
+elasticsearch_data/
+kafka_data/
+zookeeper_data/
+zookeeper_log/
+searxng_data/
+
+# ── SearXNG secrets (auto-generated) ──────────────────────────────────────────
+searxng/settings.yml.bak
+searxng/uwsgi.ini
+
+# ── Environment / secrets ─────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.jks
+*.keystore
+
+# ── JavaFX native build ───────────────────────────────────────────────────────
+client/src/main/deploy/
+client/src/main/native/
+
+# ── Test reports ─────────────────────────────────────────────────────────────
+surefire-reports/
+failsafe-reports/
