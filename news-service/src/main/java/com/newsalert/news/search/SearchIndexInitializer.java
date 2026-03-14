@@ -5,6 +5,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.hibernate.search.mapper.orm.session.SearchSession;
 import org.hibernate.search.mapper.orm.massindexing.MassIndexer;
 import org.jboss.logging.Logger;
@@ -24,6 +25,15 @@ public class SearchIndexInitializer {
     @Inject
     SearchSession searchSession;
 
+    @ConfigProperty(name = "newsalert.search.auto-reindex-on-empty", defaultValue = "true")
+    boolean autoReindexOnEmpty;
+
+    @ConfigProperty(name = "newsalert.search.reindex-threads", defaultValue = "2")
+    int reindexThreads;
+
+    @ConfigProperty(name = "newsalert.search.reindex-batch-size", defaultValue = "25")
+    int reindexBatchSize;
+
     /**
      * Observes application startup event and checks if Elasticsearch index is empty.
      * If the index contains no documents, triggers a mass reindexing operation.
@@ -34,6 +44,12 @@ public class SearchIndexInitializer {
      */
     @Transactional
     public void onStart(@Observes StartupEvent event) {
+        // Skip auto-reindexing if disabled via configuration
+        if (!autoReindexOnEmpty) {
+            LOG.info("Auto-reindexing on startup is disabled via configuration");
+            return;
+        }
+        
         try {
             LOG.info("Checking Elasticsearch index status on startup...");
             
@@ -65,14 +81,17 @@ public class SearchIndexInitializer {
      * 
      * I chose to use MassIndexer here because it's the most efficient way to
      * bulk index existing data, especially when dealing with thousands of records.
+     * The thread count and batch size are configurable via application.properties
+     * to allow tuning based on system resources and dataset size.
      */
     private void performMassIndexing() {
         try {
-            LOG.info("Starting mass reindexing operation...");
+            LOG.infof("Starting mass reindexing operation with %d threads and batch size %d", 
+                      reindexThreads, reindexBatchSize);
             
             MassIndexer indexer = searchSession.massIndexer(com.newsalert.news.entity.SearchResult.class)
-                    .threadsToLoadObjects(2) // Use 2 threads for better performance
-                    .batchSizeToLoadObjects(25); // Process 25 entities per batch
+                    .threadsToLoadObjects(reindexThreads) // Configurable thread count
+                    .batchSizeToLoadObjects(reindexBatchSize); // Configurable batch size
             
             // Start the indexing operation and wait for completion
             indexer.startAndWait();
