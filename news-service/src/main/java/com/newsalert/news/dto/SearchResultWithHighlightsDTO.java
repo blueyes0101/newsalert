@@ -34,12 +34,17 @@ public class SearchResultWithHighlightsDTO {
      * support will be added in a future iteration once we figure out the correct
      * Hibernate Search API for highlighting.
      * 
+     * I tried to implement highlighting using the Hibernate Search 6 API, but
+     * the documentation was unclear about the exact method signatures. The basic
+     * search functionality is working, so we'll add highlighting later.
+     * 
      * @param entity the SearchResult entity
      * @param searchResult the Hibernate Search result (not used currently)
      * @return a populated DTO with original values
      */
     public static SearchResultWithHighlightsDTO from(SearchResult entity, org.hibernate.search.engine.search.query.SearchResult<SearchResult> searchResult) {
         // For now, just use the basic from method without highlighting
+        // TODO: Implement proper highlighting once we understand the correct API
         return from(entity);
     }
     
