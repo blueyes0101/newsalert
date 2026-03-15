@@ -2,6 +2,8 @@ package com.newsalert.news.resource;
 
 import com.newsalert.news.dto.SearchResponse;
 import com.newsalert.news.dto.SearchResultDTO;
+import com.newsalert.news.dto.SearchResultWithHighlightsDTO;
+import com.newsalert.news.dto.SearchResponseWithHighlights;
 import com.newsalert.news.entity.SearchResult;
 import com.newsalert.news.repository.SearchResultRepository;
 import io.smallrye.common.annotation.Blocking;
@@ -102,6 +104,78 @@ public class SearchResource {
                 dtos.size(), result.total().hitCount(), q);
 
         return new SearchResponse(dtos, result.total().hitCount(), page, size);
+    }
+
+    // ── GET /api/search/highlighted ───────────────────────────────────────────────
+
+    /**
+     * Full-text search with highlighting support for matched terms.
+     * Returns search results with highlighted fragments for title and snippet fields.
+     * Highlighted terms are wrapped in <em> tags for easy styling in the UI.
+     *
+     * @param q       required – search term matched against title + snippet (fuzzy)
+     * @param keyword optional – exact keyword field filter (e.g. "Bitcoin")
+     * @param from    optional – only results discovered on or after this date
+     * @param page    page number (0-based), default 0
+     * @param size    page size, default 20
+     */
+    @GET
+    @Path("/highlighted")
+    @Blocking
+    @Transactional
+    public SearchResponseWithHighlights searchWithHighlights(
+            @QueryParam("q")       @DefaultValue("") String q,
+            @QueryParam("keyword")                   String keyword,
+            @QueryParam("from")                      LocalDate from,
+            @QueryParam("page")    @DefaultValue("0")  int page,
+            @QueryParam("size")    @DefaultValue("20") int size) {
+
+        if (q.isBlank()) {
+            throw new BadRequestException("Query parameter 'q' is required and must not be blank");
+        }
+        if (page < 0) page = 0;
+        if (size < 1 || size > 100) size = 20;
+
+        LOG.debugf("Search with highlights: q='%s' keyword='%s' from=%s page=%d size=%d",
+                q, keyword, from, page, size);
+
+        final String effectiveKeyword = keyword;
+        final LocalDate effectiveFrom = from;
+
+        // Build the search query with highlighting support
+        var result = searchSession
+                        .search(SearchResult.class)
+                        .where(f -> {
+                            var bool = f.bool()
+                                    .must(f.match()
+                                            .fields("title", "snippet")
+                                            .matching(q)
+                                            .fuzzy(1));
+
+                            if (effectiveKeyword != null && !effectiveKeyword.isBlank()) {
+                                bool = bool.filter(f.match()
+                                        .field("keyword")
+                                        .matching(effectiveKeyword));
+                            }
+                            if (effectiveFrom != null) {
+                                bool = bool.filter(f.range()
+                                        .field("discoveredAt")
+                                        .atLeast(effectiveFrom.atStartOfDay()));
+                            }
+                            return bool;
+                        })
+                        .sort(f -> f.field("discoveredAt").desc())
+                        .fetch(page * size, size);
+
+        // Convert hits to DTOs with highlight information
+        List<SearchResultWithHighlightsDTO> dtos = result.hits().stream()
+                .map(hit -> SearchResultWithHighlightsDTO.from(hit, result))
+                .toList();
+
+        LOG.debugf("Search with highlights returned %d/%d hits for q='%s'",
+                dtos.size(), result.total().hitCount(), q);
+
+        return new SearchResponseWithHighlights(dtos, result.total().hitCount(), page, size);
     }
 
     // ── GET /api/search/health ────────────────────────────────────────────────
