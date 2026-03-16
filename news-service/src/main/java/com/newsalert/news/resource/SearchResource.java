@@ -8,6 +8,8 @@ import com.newsalert.news.entity.SearchResult;
 import com.newsalert.news.repository.SearchResultRepository;
 import io.smallrye.common.annotation.Blocking;
 import org.hibernate.search.mapper.orm.session.SearchSession;
+import org.hibernate.search.engine.search.aggregation.AggregationKey;
+import org.hibernate.search.engine.search.query.SearchResult;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
@@ -236,5 +238,59 @@ public class SearchResource {
                     .entity("{\"status\":\"error\",\"message\":\"Reindex interrupted\"}")
                     .build();
         }
+    }
+
+    // ── GET /api/search/stats ────────────────────────────────────────────────
+
+    /**
+     * Returns aggregated search result counts grouped by source.
+     * Optionally accepts a keyword parameter to filter results before aggregation.
+     * 
+     * Uses Hibernate Search aggregations to efficiently count documents per source
+     * without retrieving all individual results.
+     * 
+     * @param keyword optional search term to filter results (default: empty string)
+     * @return Map<String, Long> where key is source name and value is document count
+     */
+    @GET
+    @Path("/stats")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Blocking
+    @Transactional
+    public Response getStats(@QueryParam("keyword") @DefaultValue("") String keyword) {
+        // Define an aggregation key for the source field
+        // This tells Hibernate Search we want to aggregate on the "source" field
+        AggregationKey<Map<String, Long>> countsBySourceKey = AggregationKey.of("counts_by_source");
+        
+        // Build the search query with aggregation
+        SearchResult<SearchResult> result = searchSession.search(SearchResult.class)
+                .where(f -> {
+                    if (keyword != null && !keyword.trim().isEmpty()) {
+                        // If keyword is provided, filter results to only those matching the keyword
+                        // We search in title, snippet, and url fields for maximum coverage
+                        return f.bool(b -> b
+                            .should(f.match().field("title").matching(keyword))
+                            .should(f.match().field("snippet").matching(keyword))
+                            .should(f.match().field("url").matching(keyword))
+                        );
+                    } else {
+                        // If no keyword, match all documents
+                        return f.matchAll();
+                    }
+                })
+                // Add aggregation: count documents grouped by source field
+                // The "source" field is defined as @KeywordField in SearchResult entity
+                // which makes it perfect for exact-value aggregations
+                .aggregation(countsBySourceKey, f -> f.terms().field("source", String.class))
+                .fetch(0, 0); // We don't need actual hits, just the aggregation results
+        
+        // Extract the aggregation results from the search result
+        // The Map contains source names as keys and document counts as values
+        Map<String, Long> countsBySource = result.aggregation(countsBySourceKey);
+        
+        LOG.debugf("Stats endpoint called with keyword='%s', returning %d sources", 
+                   keyword, countsBySource.size());
+        
+        return Response.ok(countsBySource).build();
     }
 }
