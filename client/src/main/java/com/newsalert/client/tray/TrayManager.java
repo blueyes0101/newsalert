@@ -114,13 +114,32 @@ public class TrayManager {
     }
 
     private void openRecentResults() {
-        // Placeholder – implemented in a future prompt
-        LOG.info("Recent Results window requested (not yet implemented)");
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/fxml/RecentResults.fxml"));
+            Parent root = loader.load();
+            Stage stage = new Stage();
+            stage.setTitle("NewsAlert – Recent Results");
+            stage.setScene(new Scene(root, 800, 500));
+            stage.show();
+        } catch (IOException e) {
+            LOG.error("Could not open RecentResults: {}", e.getMessage());
+        }
     }
 
     private void openSettings() {
-        // Placeholder – implemented in a future prompt
-        LOG.info("Settings window requested (not yet implemented)");
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/fxml/Settings.fxml"));
+            Parent root = loader.load();
+            Stage stage = new Stage();
+            stage.setTitle("NewsAlert \u2013 Settings");
+            stage.setResizable(false);
+            stage.setScene(new Scene(root, 460, 340));
+            stage.show();
+        } catch (IOException e) {
+            LOG.error("Could not open Settings: {}", e.getMessage());
+        }
     }
 
     /**

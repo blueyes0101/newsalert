@@ -62,6 +62,7 @@ public class KeywordManagerController {
                     statusLabel.setText("Added: " + keyword);
                     refreshAlerts();
                 });
+                triggerCrawlerAsync(keyword);
             } catch (AlertServiceApi.ApiException ex) {
                 Platform.runLater(() -> statusLabel.setText("Error: " + ex.getMessage()));
             }
@@ -108,6 +109,17 @@ public class KeywordManagerController {
     @FXML
     void onRefresh() {
         refreshAlerts();
+    }
+
+    private void triggerCrawlerAsync(String keyword) {
+        new Thread(() -> {
+            try {
+                api.triggerCrawler(config.newsServiceUrl, config.jwtToken);
+                LOG.info("Crawler triggered for new keyword: {}", keyword);
+            } catch (AlertServiceApi.ApiException ex) {
+                LOG.warn("Crawler trigger failed for keyword '{}': {}", keyword, ex.getMessage());
+            }
+        }, "kw-crawler").start();
     }
 
     private void refreshAlerts() {

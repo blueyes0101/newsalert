@@ -73,8 +73,17 @@ public class NotificationPopupController {
 
     @FXML
     void onView() {
-        // Placeholder: a future prompt will open the Recent Results window
-        LOG.info("View button clicked in notification popup");
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/fxml/RecentResults.fxml"));
+            Parent root = loader.load();
+            Stage stage = new Stage();
+            stage.setTitle("NewsAlert \u2013 Recent Results");
+            stage.setScene(new Scene(root, 800, 500));
+            stage.show();
+        } catch (IOException e) {
+            LOG.error("Could not open RecentResults: {}", e.getMessage());
+        }
         close();
     }
 

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.newsalert.client.ui.SettingsController"
+            prefWidth="460" prefHeight="380">
+
+    <!-- ── Title bar ──────────────────────────────────────────────────── -->
+    <top>
+        <HBox style="-fx-padding: 16 16 12 16; -fx-background-color: #f5f5f5;
+                     -fx-border-color: #e0e0e0; -fx-border-width: 0 0 1 0;">
+            <Label text="Settings"
+                   style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #333333;"/>
+        </HBox>
+    </top>
+
+    <!-- ── Fields ─────────────────────────────────────────────────────── -->
+    <center>
+        <VBox spacing="0">
+            <GridPane hgap="12" vgap="12">
+                <padding><Insets top="20" right="20" bottom="12" left="20"/></padding>
+                <columnConstraints>
+                    <ColumnConstraints minWidth="160" prefWidth="160"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                </columnConstraints>
+
+                <Label text="Email" GridPane.rowIndex="0" GridPane.columnIndex="0"
+                       style="-fx-text-fill: #555555;"/>
+                <TextField fx:id="emailField" GridPane.rowIndex="0" GridPane.columnIndex="1"
+                           editable="false"
+                           style="-fx-background-color: #f0f0f0; -fx-text-fill: #777777;"/>
+
+                <Label text="Alert-Service URL" GridPane.rowIndex="1" GridPane.columnIndex="0"
+                       style="-fx-text-fill: #555555;"/>
+                <TextField fx:id="alertServiceUrlField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                <Label text="News-Service URL" GridPane.rowIndex="2" GridPane.columnIndex="0"
+                       style="-fx-text-fill: #555555;"/>
+                <TextField fx:id="newsServiceUrlField" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                <Label text="Crawl interval (min)" GridPane.rowIndex="3" GridPane.columnIndex="0"
+                       style="-fx-text-fill: #555555;"/>
+                <TextField fx:id="crawlIntervalField" GridPane.rowIndex="3" GridPane.columnIndex="1"
+                           promptText="1–60" prefWidth="80" maxWidth="80"/>
+            </GridPane>
+
+            <!-- Change Password -->
+            <HBox spacing="8" style="-fx-padding: 4 20 0 20;">
+                <Button text="Change Password" onAction="#onChangePassword"
+                        style="-fx-background-color: #e8eaed;"/>
+            </HBox>
+        </VBox>
+    </center>
+
+    <!-- ── Bottom action bar ──────────────────────────────────────────── -->
+    <bottom>
+        <VBox spacing="0">
+            <Label fx:id="statusLabel" text=""
+                   style="-fx-text-fill: #555555; -fx-padding: 6 20 0 20; -fx-font-size: 11;"/>
+            <HBox spacing="8" alignment="CENTER_RIGHT"
+                  style="-fx-padding: 10 16 16 16; -fx-border-color: #e0e0e0;
+                         -fx-border-width: 1 0 0 0; -fx-background-color: #fafafa;">
+                <Button text="Logout" onAction="#onLogout"
+                        style="-fx-background-color: #d93025; -fx-text-fill: white;
+                               -fx-background-radius: 4;"/>
+                <Button text="Save" onAction="#onSave"
+                        style="-fx-background-color: #1a73e8; -fx-text-fill: white;
+                               -fx-background-radius: 4;"/>
+            </HBox>
+        </VBox>
+    </bottom>
+
+</BorderPane>

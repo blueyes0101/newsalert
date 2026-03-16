@@ -1,6 +1,7 @@
 package com.newsalert.client.api;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import okhttp3.*;
@@ -81,6 +82,47 @@ public class AlertServiceApi {
         return GSON.fromJson(json, AlertDto.class);
     }
 
+    // ── Crawler ───────────────────────────────────────────────────────────────
+
+    /**
+     * Fires POST {newsBaseUrl}/api/crawler/run to kick off an immediate crawl.
+     *
+     * @param newsBaseUrl base URL of the news-service (e.g. http://localhost:8080)
+     */
+    public void triggerCrawler(String newsBaseUrl, String token) throws ApiException {
+        Request req = new Request.Builder()
+                .url(newsBaseUrl + "/api/crawler/run")
+                .header("Authorization", "Bearer " + token)
+                .post(RequestBody.create("", JSON))
+                .build();
+        execute(req);
+    }
+
+    // ── Search ────────────────────────────────────────────────────────────────
+
+    /**
+     * Searches for news results matching {@code keyword} via the news-service.
+     *
+     * @param newsBaseUrl base URL of the news-service (e.g. http://localhost:8080)
+     */
+    public List<SearchResultDto> searchResults(String keyword, String newsBaseUrl, String token)
+            throws ApiException {
+        String url = newsBaseUrl
+                + "/api/search?q=" + java.net.URLEncoder.encode(keyword, java.nio.charset.StandardCharsets.UTF_8)
+                + "&page=0&size=20";
+        Request req = new Request.Builder()
+                .url(url)
+                .header("Authorization", "Bearer " + token)
+                .get()
+                .build();
+        String json = execute(req);
+        JsonObject page = GSON.fromJson(json, JsonObject.class);
+        JsonArray arr = page.has("results") ? page.getAsJsonArray("results") : new JsonArray();
+        Type listType = new TypeToken<List<SearchResultDto>>() {}.getType();
+        List<SearchResultDto> results = GSON.fromJson(arr, listType);
+        return results != null ? results : Collections.emptyList();
+    }
+
     // ── HTTP helpers ──────────────────────────────────────────────────────────
 
     private String get(String path, String token) throws ApiException {
@@ -138,11 +180,30 @@ public class AlertServiceApi {
 
     // ── DTOs ──────────────────────────────────────────────────────────────────
 
+    public static class SearchResultDto {
+        public long   id;
+        public String title;
+        public String snippet;
+        public String url;
+        public String source;
+        public String keyword;
+        public String discoveredAt;
+
+        public String getTitle()       { return title; }
+        public String getUrl()         { return url; }
+        public String getDiscoveredAt() { return discoveredAt; }
+    }
+
     public static class AlertDto {
         public long id;
         public String keyword;
         public boolean active;
         public String createdAt;
+
+        public long getId()       { return id; }
+        public String getKeyword() { return keyword; }
+        public boolean isActive()  { return active; }
+        public String getCreatedAt() { return createdAt; }
     }
 
     public static class ApiException extends Exception {

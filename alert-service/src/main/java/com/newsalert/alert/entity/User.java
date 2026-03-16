@@ -2,6 +2,7 @@ package com.newsalert.alert.entity;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -12,6 +13,8 @@ import java.util.List;
 public class User extends PanacheEntity {
 
     @Column(name = "email", nullable = false, unique = true)
+    @FullTextField
+    @KeywordField
     public String email;
 
     @Column(name = "password_hash", nullable = false)

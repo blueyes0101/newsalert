@@ -2,6 +2,7 @@ package com.newsalert.client;
 
 import com.newsalert.client.config.AppConfig;
 import com.newsalert.client.config.ConfigManager;
+import com.newsalert.client.crawler.CrawlScheduler;
 import com.newsalert.client.tray.TrayManager;
 import com.newsalert.client.ui.NotificationPopupController;
 import com.newsalert.client.ws.NotificationListener;
@@ -50,6 +51,7 @@ public class MainApp extends Application {
     public void stop() {
         if (wsListener  != null) wsListener.stop();
         if (trayManager != null) trayManager.remove();
+        CrawlScheduler.getInstance().stop();
     }
 
     // ── Private ───────────────────────────────────────────────────────────────
@@ -89,6 +91,10 @@ public class MainApp extends Application {
                 (keyword, count) -> Platform.runLater(
                         () -> NotificationPopupController.show(keyword, count)));
         wsListener.start();
+
+        // Periodic crawler
+        CrawlScheduler.getInstance().start(
+                config.newsServiceUrl, config.jwtToken, config.crawlIntervalMinutes);
 
         LOG.info("NewsAlert is running");
     }

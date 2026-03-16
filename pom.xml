@@ -17,6 +17,7 @@
         <module>news-service</module>
         <module>alert-service</module>
         <module>client</module>
+        <module>demo</module>
     </modules>
 
     <properties>
