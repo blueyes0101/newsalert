@@ -9,7 +9,6 @@ import com.newsalert.news.repository.SearchResultRepository;
 import io.smallrye.common.annotation.Blocking;
 import org.hibernate.search.mapper.orm.session.SearchSession;
 import org.hibernate.search.engine.search.aggregation.AggregationKey;
-import org.hibernate.search.engine.search.query.SearchResult;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
@@ -19,6 +18,7 @@ import org.jboss.logging.Logger;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * REST endpoints for full-text search and index management.
@@ -263,7 +263,8 @@ public class SearchResource {
         AggregationKey<Map<String, Long>> countsBySourceKey = AggregationKey.of("counts_by_source");
         
         // Build the search query with aggregation
-        SearchResult<SearchResult> result = searchSession.search(SearchResult.class)
+        // I use the fully qualified name here to avoid collision with our entity class
+        org.hibernate.search.engine.search.query.SearchResult<SearchResult> result = searchSession.search(SearchResult.class)
                 .where(f -> {
                     if (keyword != null && !keyword.trim().isEmpty()) {
                         // If keyword is provided, filter results to only those matching the keyword
