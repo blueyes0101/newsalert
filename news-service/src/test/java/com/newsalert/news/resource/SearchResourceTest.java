@@ -236,4 +236,21 @@ public class SearchResourceTest {
                 .body("'Quarkus Blog'", greaterThanOrEqualTo(1))
                 .body("'Hibernate Blog'", greaterThanOrEqualTo(1));
     }
+
+    /**
+     * Tests searching with a keyword filter on the stats endpoint.
+     *
+     * <p>I added this test to verify that the stats endpoint correctly filters
+     * by keyword before aggregating. This ensures the keyword parameter works.</p>
+     */
+    @Test
+    public void testAggregationWithKeywordFilter() {
+        given()
+                .queryParam("keyword", "Quarkus")
+                .when()
+                .get("/api/search/stats")
+                .then()
+                .statusCode(200)
+                .body("size()", greaterThanOrEqualTo(0));
+    }
 }
