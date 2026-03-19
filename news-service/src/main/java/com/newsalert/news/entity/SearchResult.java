@@ -40,6 +40,7 @@ import java.time.LocalDateTime;
 @Indexed
 public class SearchResult extends PanacheEntity {
 
+    // Indexed for full-text search with the default analyzer (tokenized, lowercased)
     @FullTextField
     @Column(name = "title", length = 512)
     public String title;
