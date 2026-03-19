@@ -105,6 +105,18 @@ GET http://localhost:8080/api/search?q=climate
 # Search filtered by keyword and date
 GET http://localhost:8080/api/search?q=climate&keyword=climate&from=2024-01-01&page=0&size=10
 
+# Search with fuzzy matching (tolerates typos)
+GET http://localhost:8080/api/search?q=climat&fuzzy=true
+
+# Search with highlighted results
+GET http://localhost:8080/api/search/highlighted?q=climate
+
+# Get aggregation stats (count by source)
+GET http://localhost:8080/api/search/stats
+
+# Get stats filtered by keyword
+GET http://localhost:8080/api/search/stats?keyword=climate
+
 # Elasticsearch health
 GET http://localhost:8080/api/search/health
 
@@ -113,6 +125,16 @@ POST http://localhost:8080/api/crawler/run
 
 # Reindex all results in Elasticsearch
 POST http://localhost:8080/api/search/reindex
+```
+
+### alert-service Search API (port 8081)
+
+```bash
+# Search alerts by keyword (with fuzzy matching)
+GET http://localhost:8081/api/alerts/search?q=quarkus&fuzzy=true
+
+# Search alerts with pagination
+GET http://localhost:8081/api/alerts/search?q=quarkus&page=0&size=10
 ```
 
 ### alert-service (port 8081)
@@ -155,6 +177,11 @@ After a crawler run finds new results, you will receive messages like:
 
 - **Automated crawling** — SearXNG meta-search runs every 15 minutes across Bing, Google, DuckDuckGo, Brave, and news-specific engines
 - **Full-text search** — Elasticsearch-backed fuzzy search with date filtering and pagination
+- **Search result highlighting** — Returns highlighted fragments showing matched terms in context
+- **Search aggregations** — Stats endpoint shows document counts grouped by source
+- **Multi-entity search** — Both SearchResult and Alert entities are indexed and searchable
+- **Custom analyzer support** — Configurable token filters (lowercase, asciifolding, stemming) for better search quality
+- **Startup auto-reindex** — Automatically rebuilds Elasticsearch index when empty
 - **Per-user deduplication** — Each user only receives notifications for results they have not seen before
 - **Email notifications** — HTML emails via Quarkus Mailer with article titles, snippets, and links
 - **Real-time WebSocket push** — Instant desktop alerts without polling
@@ -162,6 +189,7 @@ After a crawler run finds new results, you will receive messages like:
 - **Schema migrations** — Flyway manages the PostgreSQL schema
 - **Resilient startup** — Docker health checks and ordered `depends_on` ensure services start safely
 - **Desktop client** — JavaFX system-tray app with setup wizard, keyword manager, and toast-style notifications
+- **Comprehensive tests** — Integration tests covering search, fuzzy matching, date filters, pagination, highlighting, and aggregations
 
 ---
 
