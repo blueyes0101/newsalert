@@ -357,3 +357,17 @@ Hibernate Search supports two backends: an embedded Lucene engine and a remote E
 | Docker-friendliness | N/A | Official image, health-check endpoint |
 
 Running Elasticsearch as a container means the index survives service restarts, can be inspected with any HTTP client (`GET http://localhost:9200/search_results/_search`), and would scale horizontally if the dataset grew beyond a single node.
+
+---
+
+## Erkenntnisse und Stolpersteine
+
+- **`write-sync` vs. `async` — mehr als ein Detail**: Im news-service habe ich `automatic-indexing.synchronization.strategy=write-sync` gewählt, damit ein Dokument direkt nach dem Datenbankcommit in Elasticsearch sichtbar ist. Im alert-service reicht `async`, weil Keyword-Suche dort nicht zeitkritisch ist. Wenn man im news-service `async` nimmt und unmittelbar nach einem Crawler-Lauf sucht, bekommt man manchmal leere Ergebnisse zurück — der Index hat das Dokument noch nicht verarbeitet. Das hat mich anfangs einige verwirrende Minuten gekostet, bis ich den Unterschied in der Doku gefunden hatte.
+
+- **MassIndexer schweigt, wenn `@Indexed` fehlt**: Während des Entwickelns hatte ich die `@Indexed`-Annotation kurzfristig auskommentiert, um etwas zu testen. Der MassIndexer hat anschließend kommentarlos durchgelaufen — null Entities indiziert, null Fehlermeldung. Ohne das `/api/search/health`-Endpoint, das Datenbankzeilen und Elasticsearch-Dokumente gegenüberstellt, wäre das kaum aufgefallen. Seitdem schaue ich nach dem Reindex immer dort nach.
+
+- **Schema-Management-Strategie pro Profil richtig setzen**: Am Anfang hatte ich im Dev-Profil versehentlich `create-or-validate` statt `drop-and-create-and-drop`. Nach jeder Änderung an den Feld-Annotationen (z.B. `highlightable` hinzufügen) gab es beim nächsten Start einen Mapping-Konflikt, weil der bestehende Elasticsearch-Index das alte Schema kannte. Die richtige Strategie für jedes Profil zu verstehen (`drop-and-create-and-drop` für Dev, `create-or-validate` für Prod) hat mich ein paar Neustarts und einen kurzen Elasticsearch-Datenverlust gekostet.
+
+- **Highlighting-Annotation nicht vergessen**: Die `f.highlight("title")`-Projektion funktioniert nur, wenn das Feld im Entity mit `highlightable = Highlightable.ANY` annotiert ist. Ohne das Attribut kommt keine Exception — die Projektion liefert einfach leere Listen zurück, und man sucht eine Weile im Query-Code nach dem Fehler, bis man in der Entity-Klasse nachschaut. Das Composite-Projektionsmuster (`f.composite().from(f.entity(), f.highlight(...)).as(...)`) findet man in der Quarkus-Doku nur, wenn man gezielt nach `SearchProjectionFactory` sucht.
+
+- **Testprofil und Elasticsearch**: Hibernate Search muss im Testprofil explizit aktiviert werden (`quarkus.hibernate-search-orm.enabled=true`) und ein gültiger ES-Host muss gesetzt sein — sonst schlägt die `SearchSession`-Injektion zur Laufzeit lautlos fehl, oder der MassIndexer im `@BeforeAll` wirft eine kryptische Nullpointer-Exception. Außerdem überschreibt das Testprofil den Production-Host `elasticsearch:9200` nicht automatisch; dafür braucht es ein explizites `%test.quarkus.hibernate-search-orm.elasticsearch.hosts=localhost:9200`.
