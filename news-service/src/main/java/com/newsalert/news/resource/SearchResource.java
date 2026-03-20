@@ -111,9 +111,18 @@ public class SearchResource {
     // ── GET /api/search/highlighted ───────────────────────────────────────────────
 
     /**
-     * Full-text search with highlighting support for matched terms.
-     * Returns search results with highlighted fragments for title and snippet fields.
-     * Highlighted terms are wrapped in <em> tags for easy styling in the UI.
+     * Full-text search with real Elasticsearch highlighting.
+     *
+     * <p>Uses a composite projection — {@code f.entity()} to load the entity plus
+     * {@code f.highlight("title")} and {@code f.highlight("snippet")} to fetch the
+     * highlighted fragments in a single round-trip to Elasticsearch. Highlighted terms
+     * arrive with {@code <em>} tags, e.g. {@code "Getting <em>Elasticsearch</em> started"}.
+     * When a field has no match (and therefore no fragments), the DTO falls back to the
+     * raw field value so the client always receives something renderable.</p>
+     *
+     * <p>For highlighting to work, the fields must be declared
+     * {@code @FullTextField(highlightable = Highlightable.ANY)} in the entity — without
+     * that attribute the projection returns empty lists silently.</p>
      *
      * @param q       required – search term matched against title + snippet (fuzzy)
      * @param keyword optional – exact keyword field filter (e.g. "Bitcoin")
@@ -144,9 +153,15 @@ public class SearchResource {
         final String effectiveKeyword = keyword;
         final LocalDate effectiveFrom = from;
 
-        // Build the search query with highlighting support
+        // Composite projection: load entity + fetch highlight fragments for title and snippet
+        // in one Elasticsearch request. The .as() lambda receives typed values directly.
         var result = searchSession
                         .search(SearchResult.class)
+                        .select(f -> f.composite()
+                                .from(f.entity(), f.highlight("title"), f.highlight("snippet"))
+                                .as((SearchResult hit, List<String> titleFragments, List<String> snippetFragments) ->
+                                        SearchResultWithHighlightsDTO.fromWithHighlights(
+                                                hit, titleFragments, snippetFragments)))
                         .where(f -> {
                             var bool = f.bool()
                                     .must(f.match()
@@ -169,15 +184,10 @@ public class SearchResource {
                         .sort(f -> f.field("discoveredAt").desc())
                         .fetch(page * size, size);
 
-        // Convert hits to DTOs with highlight information
-        List<SearchResultWithHighlightsDTO> dtos = result.hits().stream()
-                .map(hit -> SearchResultWithHighlightsDTO.from(hit, result))
-                .toList();
-
         LOG.debugf("Search with highlights returned %d/%d hits for q='%s'",
-                dtos.size(), result.total().hitCount(), q);
+                result.hits().size(), result.total().hitCount(), q);
 
-        return new SearchResponseWithHighlights(dtos, result.total().hitCount(), page, size);
+        return new SearchResponseWithHighlights(result.hits(), result.total().hitCount(), page, size);
     }
 
     // ── GET /api/search/health ────────────────────────────────────────────────

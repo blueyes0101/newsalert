@@ -202,12 +202,15 @@ public class SearchResourceTest {
     }
 
     /**
-     * Tests the highlighted search endpoint.
+     * Tests the highlighted search endpoint with real highlight fragments.
      *
-     * <p>I verify that the highlighted endpoint returns results with the hits field
-     * (SearchResponseWithHighlights uses "hits" not "results"). Since "Elasticsearch"
-     * appears in both title and snippet of seeded documents, the response should
-     * contain non-null title and snippet values.</p>
+     * <p>I search for "Elasticsearch" which appears in both the title and snippet of
+     * multiple seeded documents. The composite projection in SearchResource sends a
+     * single request to Elasticsearch and gets back both the entity data and the
+     * highlighted fragments (with {@code <em>} tags around matched terms).</p>
+     *
+     * <p>The DTO falls back to the raw field value when no fragments are returned for a
+     * field, so titleHighlights and snippetHighlights are always non-null.</p>
      */
     @Test
     public void testHighlighting() {
@@ -219,7 +222,12 @@ public class SearchResourceTest {
                 .statusCode(200)
                 .body("hits.size()", greaterThan(0))
                 .body("hits[0].title", notNullValue())
-                .body("hits[0].snippet", notNullValue());
+                .body("hits[0].snippet", notNullValue())
+                // titleHighlights and snippetHighlights are never null:
+                // ES returns <em>-tagged fragments when the field matched, otherwise
+                // the DTO falls back to the raw field value as a single-element list
+                .body("hits[0].titleHighlights", notNullValue())
+                .body("hits[0].snippetHighlights", notNullValue());
     }
 
     /**

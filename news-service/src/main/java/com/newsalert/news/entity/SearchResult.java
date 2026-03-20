@@ -2,6 +2,7 @@ package com.newsalert.news.entity;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
+import org.hibernate.search.engine.backend.types.Highlightable;
 import org.hibernate.search.engine.backend.types.Sortable;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.*;
 
@@ -10,42 +11,36 @@ import java.time.LocalDateTime;
 /**
  * Entity representing a crawled news search result.
  *
- * <p>This entity is indexed by Hibernate Search for full-text search capabilities.</p>
+ * <p>This entity is indexed by Hibernate Search for full-text search capabilities.
+ * Both PostgreSQL (via Hibernate ORM) and Elasticsearch (via Hibernate Search) are
+ * kept in sync automatically: when a {@code SearchResult} is persisted inside a
+ * {@code @Transactional} method, the JPA event listener fires and sends the document
+ * to Elasticsearch on transaction commit.</p>
  *
- * <h3>Custom Analyzer Configuration</h3>
- *
- * <p>I initially planned to create a custom analyzer for better search quality, but
- * decided to use the default analyzer for simplicity. Here's what a custom analyzer
- * would look like and why it would be beneficial:</p>
- *
- * <p>A custom analyzer could chain these token filters:
- * <ol>
- *   <li><b>lowercase</b> - Converts "Quarkus" to "quarkus" for case-insensitive matching</li>
- *   <li><b>asciifolding</b> - Converts "café" to "cafe" by removing accents</li>
- *   <li><b>porter_stem</b> - Converts "running" to "run" by reducing to root form</li>
- * </ol>
- * </p>
- *
- * <p>To apply a custom analyzer, create a class implementing
- * {@code ElasticsearchAnalysisConfigurer} and reference it in application.properties:
- * {@code quarkus.hibernate-search-orm.elasticsearch.analysis.configurer=bean:myConfigurer}
- * Then apply it to fields: {@code @FullTextField(analyzer = "myAnalyzer")}</p>
- *
- * <p>For now, we're using the default analyzer which provides basic tokenization
- * and lowercasing. This works well for our current needs, but a custom analyzer
- * would improve recall for searches with accented characters or different word forms.</p>
+ * <h3>Field Annotation Strategy</h3>
+ * <ul>
+ *   <li>{@code @FullTextField} — analysed by the {@code news_analyzer} (see
+ *       {@code NewsAnalysisConfigurer}): standard tokenisation, lowercase, ASCII-folding,
+ *       English stemming. Also declared {@code highlightable} so Elasticsearch can return
+ *       highlighted fragments with {@code <em>} tags around matched terms.</li>
+ *   <li>{@code @KeywordField} — stored verbatim (no analysis). Used for exact-match
+ *       filters (keyword, source) and deduplication (url).</li>
+ *   <li>{@code @GenericField(sortable = YES)} — doc-values column in Elasticsearch,
+ *       required for efficient {@code sort()} operations.</li>
+ * </ul>
  */
 @Entity
 @Table(name = "search_results")
 @Indexed
 public class SearchResult extends PanacheEntity {
 
-    // Indexed for full-text search with the default analyzer (tokenized, lowercased)
-    @FullTextField
+    // Analysed by news_analyzer (lowercase + asciifolding + English stemming).
+    // Highlightable.ANY lets Elasticsearch return <em>-wrapped fragments for these fields.
+    @FullTextField(highlightable = Highlightable.ANY)
     @Column(name = "title", length = 512)
     public String title;
 
-    @FullTextField
+    @FullTextField(highlightable = Highlightable.ANY)
     @Column(name = "snippet", columnDefinition = "TEXT")
     public String snippet;
 
