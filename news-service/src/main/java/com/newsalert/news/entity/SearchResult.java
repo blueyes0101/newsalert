@@ -34,13 +34,14 @@ import java.time.LocalDateTime;
 @Indexed
 public class SearchResult extends PanacheEntity {
 
-    // Analysed by news_analyzer (lowercase + asciifolding + English stemming).
+    // Analysed by news_analyzer (see NewsAnalysisConfigurer): standard tokenisation,
+    // lowercase, ASCII-folding, English stemming.
     // Highlightable.ANY lets Elasticsearch return <em>-wrapped fragments for these fields.
-    @FullTextField(highlightable = Highlightable.ANY)
+    @FullTextField(analyzer = "news_analyzer", highlightable = Highlightable.ANY)
     @Column(name = "title", length = 512)
     public String title;
 
-    @FullTextField(highlightable = Highlightable.ANY)
+    @FullTextField(analyzer = "news_analyzer", highlightable = Highlightable.ANY)
     @Column(name = "snippet", columnDefinition = "TEXT")
     public String snippet;
 
