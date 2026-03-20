@@ -173,6 +173,24 @@ After a crawler run finds new results, you will receive messages like:
 
 ---
 
+## Aufgabenstellung
+
+Dieses Projekt ist eine Erweiterung des bestehenden NewsAlert-Backends aus dem Kurs *Verteilte Systeme 2*. Das Ziel dieser Erweiterung war es, das Thema **Hibernate Search mit Elasticsearch** praxisnah umzusetzen und dabei tief genug einzusteigen, dass Kommilitonen anhand des Codes und der Dokumentation verstehen, wie Volltextsuche in einer Quarkus-Anwendung funktioniert — und warum man dafür nicht einfach SQL-`LIKE` verwendet.
+
+Konkret wollte ich folgende Funktionen nachweislich zum Laufen bringen:
+
+- Volltextsuche über mehrere Felder (`title`, `snippet`) mit Fuzzy-Toleranz für Tippfehler
+- Datumsbasierte Filterung und Sortierung nach Erscheinungsdatum
+- Aggregationen: Trefferanzahl gruppiert nach Quelle (vergleichbar mit Facetten-Navigation in Online-Shops)
+- Highlighting: Elasticsearch liefert Fragmente mit `<em>`-Tags um die gefundenen Begriffe zurück
+- Multi-Entity-Indexierung: sowohl `SearchResult`- (news-service) als auch `Alert`-Entities (alert-service) sind indexiert und durchsuchbar
+- Eigener Elasticsearch-Analyzer (`news_analyzer`) mit Lowercase, ASCII-Folding und English-Stemming für bessere Suchqualität
+- Automatisches Reindexieren beim Neustart, falls der Index leer ist (z.B. nach einem `docker compose down -v`)
+
+Erfolgskriterium war für mich: Alle Suchendpunkte antworten korrekt, die Integrationstests bestehen, und jemand der das Repo klont kann den Stack mit `docker compose up` starten und über die Swagger-UI alle Features selbst ausprobieren — ohne dass ich danebenstehen muss.
+
+---
+
 ## Key Features
 
 - **Automated crawling** — SearXNG meta-search runs every 15 minutes across Bing, Google, DuckDuckGo, Brave, and news-specific engines
