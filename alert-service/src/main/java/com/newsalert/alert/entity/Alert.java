@@ -16,11 +16,11 @@ public class Alert extends PanacheEntity {
 
     @Column(name = "keyword", nullable = false)
     @FullTextField
-    @KeywordField
+    @KeywordField(name = "keyword_exact")
     public String keyword;
 
     @Column(name = "active", nullable = false)
-    @KeywordField
+    @GenericField
     public boolean active = true;
 
     @Column(name = "created_at", nullable = false)

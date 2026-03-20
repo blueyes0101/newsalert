@@ -14,7 +14,7 @@ public class User extends PanacheEntity {
 
     @Column(name = "email", nullable = false, unique = true)
     @FullTextField
-    @KeywordField
+    @KeywordField(name = "email_keyword")
     public String email;
 
     @Column(name = "password_hash", nullable = false)
