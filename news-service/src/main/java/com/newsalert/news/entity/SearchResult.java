@@ -2,6 +2,7 @@ package com.newsalert.news.entity;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
+import org.hibernate.search.engine.backend.types.Aggregable;
 import org.hibernate.search.engine.backend.types.Highlightable;
 import org.hibernate.search.engine.backend.types.Sortable;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.*;
@@ -49,7 +50,7 @@ public class SearchResult extends PanacheEntity {
     @Column(name = "url", unique = true, length = 2048, nullable = false)
     public String url;
 
-    @KeywordField
+    @KeywordField(aggregable = Aggregable.YES)
     @Column(name = "source", length = 128)
     public String source;
 
